@@ -1,6 +1,6 @@
 Type=Exe
 Reference=*\G{00020430-0000-0000-C000-000000000046}#2.0#0#C:\windows\SysWow64\stdole2.tlb#OLE Automation
-Reference=*\G{9F6AA142-7401-4BA9-BB7A-AA2A428A03F8}#1.0#0#..\Sqlite\J3cnn\activex-dll\bin\J3cnn.dll#J3cnn - SQLite3 for Vb6 - By J. Elihu - v1.1
+Reference=*\G{9F6AA142-7401-4BA9-BB7A-AA2A428A03F8}#1.0#0#plugins\J3cnn.dll#J3cnn - SQLite3 for Vb6 - By J. Elihu - v1.1
 Form=server-gui\frm\FrmMain.frm
 Form=server-gui\frm\FrmSetup.frm
 Form=server-gui\frm\FrmAbout.frm

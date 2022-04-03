@@ -1,0 +1,446 @@
+VERSION 5.00
+Begin VB.PropertyPage JButtonppg 
+   Caption         =   "Button Picture"
+   ClientHeight    =   3315
+   ClientLeft      =   0
+   ClientTop       =   0
+   ClientWidth     =   5850
+   BeginProperty Font 
+      Name            =   "Tahoma"
+      Size            =   8.25
+      Charset         =   0
+      Weight          =   400
+      Underline       =   0   'False
+      Italic          =   0   'False
+      Strikethrough   =   0   'False
+   EndProperty
+   PaletteMode     =   0  'Halftone
+   ScaleHeight     =   221
+   ScaleMode       =   3  'Pixel
+   ScaleWidth      =   390
+   Begin VB.CommandButton btnMain 
+      Caption         =   "Resize"
+      Enabled         =   0   'False
+      Height          =   495
+      Index           =   2
+      Left            =   4200
+      TabIndex        =   3
+      Top             =   1920
+      Width           =   1455
+   End
+   Begin VB.CommandButton btnMain 
+      Caption         =   "Eliminar"
+      Enabled         =   0   'False
+      Height          =   495
+      Index           =   1
+      Left            =   4200
+      TabIndex        =   2
+      Top             =   2520
+      Width           =   1455
+   End
+   Begin VB.CommandButton btnMain 
+      Caption         =   "Seleccionar..."
+      Height          =   495
+      Index           =   0
+      Left            =   4200
+      TabIndex        =   1
+      Top             =   1080
+      Width           =   1455
+   End
+   Begin VB.PictureBox PicPrev 
+      AutoRedraw      =   -1  'True
+      BackColor       =   &H00FFFFFF&
+      BorderStyle     =   0  'None
+      Height          =   3000
+      Left            =   120
+      ScaleHeight     =   200
+      ScaleMode       =   3  'Pixel
+      ScaleWidth      =   264
+      TabIndex        =   0
+      TabStop         =   0   'False
+      Top             =   120
+      Width           =   3960
+   End
+   Begin VB.Label lblSize 
+      Alignment       =   2  'Center
+      AutoSize        =   -1  'True
+      BackStyle       =   0  'Transparent
+      Caption         =   "Tamaño"
+      Height          =   435
+      Left            =   4200
+      TabIndex        =   4
+      Top             =   120
+      Width           =   1410
+   End
+   Begin VB.Line Line2 
+      BorderColor     =   &H80000010&
+      X1              =   280
+      X2              =   376
+      Y1              =   48
+      Y2              =   48
+   End
+   Begin VB.Line Line1 
+      BorderColor     =   &H80000010&
+      X1              =   280
+      X2              =   376
+      Y1              =   120
+      Y2              =   120
+   End
+End
+Attribute VB_Name = "JButtonppg"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+
+Private Declare Function GetOpenFileName Lib "COMDLG32" Alias "GetOpenFileNameA" (file As OPENFILENAME) As Long
+Private Type OPENFILENAME
+    lStructSize         As Long                 ' Filled with UDT size
+    hwndOwner           As Long                 ' Tied to Owner
+    hInstance           As Long                 ' Ignored (used only by templates)
+    lpstrFilter         As String               ' Tied to Filter
+    lpstrCustomFilter   As String               ' Ignored (exercise for reader)
+    nMaxCustFilter      As Long                 ' Ignored (exercise for reader)
+    nFilterIndex        As Long                 ' Tied to FilterIndex
+    lpstrFile           As String               ' Tied to FileName
+    nMaxFile            As Long                 ' Handled internally
+    lpstrFileTitle      As String               ' Tied to FileTitle
+    nMaxFileTitle       As Long                 ' Handled internally
+    lpstrInitialDir     As String               ' Tied to InitDir
+    lpstrTitle          As String               ' Tied to DlgTitle
+    Flags               As Long                 ' Tied to Flags
+    nFileOffset         As Integer              ' Ignored (exercise for reader)
+    nFileExtension      As Integer              ' Ignored (exercise for reader)
+    lpstrDefExt         As String               ' Tied to DefaultExt
+    lCustData           As Long                 ' Ignored (needed for hooks)
+    lpfnHook            As Long                 ' Ignored (good luck with hooks)
+    lpTemplateName      As Long                 ' Ignored (good luck with templates)
+End Type
+
+Private Const FILTER_PICTURES As String = "Pictures|*.bmp;*.gif;*.jpg;*.jpeg;*.png;*.dib;*.rle;*.jpe;*.jfif;*.emf;*.wmf;*.tif;*.tiff;*.ico;*.cur"
+
+
+Private Declare Function GdiplusStartup Lib "gdiplus" (ByRef token As Long, ByRef lpInput As Long, Optional ByRef lpOutput As Any) As Long
+Private Declare Function GdiplusShutdown Lib "gdiplus" (ByVal token As Long) As Long
+Private Declare Function GdipLoadImageFromFile Lib "gdiplus" (ByVal FileName As Long, ByRef Image As Long) As Long
+Private Declare Function GdipLoadImageFromStream Lib "gdiplus" (ByVal Stream As Any, ByRef Image As Long) As Long
+Private Declare Function GdipGetImageDimension Lib "gdiplus" (ByVal Image As Long, ByRef Width As Single, ByRef Height As Single) As Long
+Private Declare Function GdipDisposeImage Lib "gdiplus" (ByVal Image As Long) As Long
+Private Declare Function GdipDrawImageRectRectI Lib "gdiplus" (ByVal hGraphics As Long, ByVal hImage As Long, ByVal DstX As Long, ByVal DstY As Long, ByVal DstWidth As Long, ByVal DstHeight As Long, ByVal SrcX As Long, ByVal SrcY As Long, ByVal SrcWidth As Long, ByVal SrcHeight As Long, ByVal srcUnit As Long, Optional ByVal imageAttributes As Long = 0, Optional ByVal Callback As Long = 0, Optional ByVal callbackData As Long = 0) As Long
+Private Declare Function GdipCreateFromHDC Lib "gdiplus" (ByVal Hdc As Long, ByRef Graphics As Long) As Long
+Private Declare Function GdipSetInterpolationMode Lib "gdiplus" (ByVal Graphics As Long, ByVal InterpolationMode As Long) As Long
+Private Declare Function GdipSetPixelOffsetMode Lib "gdiplus" (ByVal Graphics As Long, ByVal PixelOffsetMode As Long) As Long
+Private Declare Function GdipDeleteGraphics Lib "gdiplus" (ByVal hGraphics As Long) As Long
+
+Private Declare Function GdipCreateBitmapFromScan0 Lib "gdiplus" (ByVal Width As Long, ByVal Height As Long, ByVal stride As Long, ByVal Format As Long, ByRef Scan0 As Any, ByRef BITMAP As Long) As Long
+Private Declare Function GdipGetImageGraphicsContext Lib "gdiplus" (ByVal Image As Long, hGraphics As Long) As Long
+Private Declare Function GdipSaveImageToStream Lib "gdiplus" (ByVal Image As Long, ByVal Stream As IUnknown, clsidEncoder As Any, encoderParams As Any) As Long
+
+Private Declare Function GlobalAlloc Lib "kernel32" (ByVal uFlags As Long, ByVal dwBytes As Long) As Long
+Private Declare Function GlobalLock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalUnlock Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Function GlobalSize Lib "kernel32" (ByVal hMem As Long) As Long
+Private Declare Sub CopyMemory Lib "kernel32.dll" Alias "RtlMoveMemory" (ByRef Destination As Any, ByRef Source As Any, ByVal Length As Long)
+
+Private Declare Function CreateStreamOnHGlobal Lib "ole32" (ByVal hGlobal As Any, ByVal fDeleteOnRelease As Long, ppstm As Any) As Long
+Private Declare Function CLSIDFromString Lib "ole32" (ByVal lpszProgID As Long, pCLSID As Any) As Long
+Private Declare Function GetHGlobalFromStream Lib "ole32" (ByVal ppstm As Long, hGlobal As Long) As Long
+
+Private Type GUID
+  Data1   As Long
+  Data2   As Integer
+  Data3   As Integer
+  Data4(7) As Byte
+End Type
+
+Private Const QmInvalid                    As Long = -1&
+Private Const QmDefault                    As Long = 0&
+Private Const QmLow                        As Long = 1&
+Private Const QmHigh                       As Long = 2&
+
+Private Const InterpolationModeNearestNeighbor      As Long = QmHigh + 3
+Private Const PixelOffsetModeHalf                   As Long = QmHigh + 2
+
+
+Private m_token    As Long
+Private m_Bitmap   As Long
+Private m_BmpW     As Single
+Private m_BmpH     As Single
+
+Private ObjBtn    As JButton
+
+Private Sub btnMain_Click(Index As Integer)
+On Error GoTo e
+Dim OFName  As OPENFILENAME
+Dim sFile   As String
+Dim bvData() As Byte
+
+    Select Case Index
+        Case 0
+        
+            With OFName
+                    .lStructSize = Len(OFName)
+                    .hwndOwner = PropertyPage.hwnd
+                    .hInstance = App.hInstance
+                    .lpstrFilter = Replace(FILTER_PICTURES, "|", Chr(0)) + Chr$(0) '"Imagenes" + Chr$(0) + "*.Ico" + Chr$(0)
+                    .lpstrFile = String(254, Chr(0))
+                    .nMaxFile = 255
+    
+                    If GetOpenFileName(OFName) Then
+                        sFile = Left(OFName.lpstrFile, InStr(OFName.lpstrFile, Chr(0)) - 1)
+                        If LoadPictureFromFile(sFile) Then
+                            DrawImage
+                            Changed = True
+                            btnMain(1).Enabled = True
+                            btnMain(2).Enabled = True
+                        End If
+                    End If
+            End With
+        Case 1
+            CleanUp
+            PicPrev.Cls
+            btnMain(1).Enabled = False
+            btnMain(2).Enabled = False
+            Changed = True
+        Case 2
+        
+            If m_Bitmap = 0 Then Exit Sub
+            Dim lW   As Long
+            Dim lH   As Long
+            Dim tmp  As String
+            Dim Bmp  As Long
+            Dim Grph As Long
+            
+            tmp = InputBox("Ingrese el tamaño de la imagen " & vbNewLine & "Ancho x Alto [40x40] ", "Redimencionar", m_BmpW & "x" & m_BmpH)
+            If tmp = vbNullString Then Exit Sub
+            Call GetSize(tmp, lW, lH)
+            
+            If (lW = m_BmpW And lH = m_BmpH) Or (lW = 0 Or lH = 0) Then Exit Sub
+            If GdipCreateBitmapFromScan0(lW, lH, 0&, &HE200B, ByVal 0&, Bmp) = 0 Then
+                If GdipGetImageGraphicsContext(Bmp, Grph) = 0 Then
+                
+                    Call GdipSetInterpolationMode(Grph, 7&)  '//InterpolationModeHighQualityBicubic
+                    Call GdipSetPixelOffsetMode(Grph, 4&)
+         
+                    Call GdipDrawImageRectRectI(Grph, m_Bitmap, 0, 0, lW, lH, 0, 0, m_BmpW, m_BmpH, &H2)
+                    GdipDeleteGraphics Grph
+                    
+                    Call GdipDisposeImage(m_Bitmap)
+                    m_Bitmap = Bmp
+                    m_BmpW = lW: m_BmpH = lH
+                    Call DrawImage
+                    lblSize = "Tamaño" & vbNewLine & m_BmpW & "*" & m_BmpH
+                    Changed = True
+                End If
+                'GdipDisposeImage Bmp
+            End If
+
+    End Select
+e:
+End Sub
+
+
+
+Private Sub PropertyPage_Initialize()
+Dim i As Long, j As Long, x As Long
+    ManageGDIP True
+    For j = -1 To PicPrev.ScaleHeight Step 6
+        x = IIf(x = -1, 5, -1)
+        For i = x To PicPrev.ScaleWidth Step 12
+            PicPrev.Line (i, j)-(i + 5, j + 5), &HCCCCCC, BF
+        Next
+    Next
+    PicPrev.Line (0, 0)-(PicPrev.ScaleWidth - 1, PicPrev.ScaleHeight - 1), vbButtonShadow, B
+    PicPrev = PicPrev.Image
+End Sub
+Private Sub PropertyPage_SelectionChanged()
+
+    If ObjBtn Is SelectedControls(0) Then Exit Sub
+    Set ObjBtn = SelectedControls(0)
+    If LoadPictureFromStream(ObjBtn.ppgGetImageStream) Then
+        DrawImage
+        btnMain(1).Enabled = True
+        btnMain(2).Enabled = True
+    End If
+End Sub
+Private Sub PropertyPage_ApplyChanges()
+    ObjBtn.ppgSetImageStream BitmapToArray(m_Bitmap)
+End Sub
+Private Sub PropertyPage_Terminate()
+    CleanUp
+    ManageGDIP False
+End Sub
+
+Private Sub DrawImage()
+Dim hGraphics   As Long
+
+    Dim lW As Long, lH As Long, lT As Long, lL As Long
+    If m_Bitmap = 0 Then Exit Sub
+    With PicPrev
+        .Cls
+        ScalePicture m_BmpW, m_BmpH, .ScaleWidth - 6, .ScaleHeight - 6, lW, lH, lL, lT
+        If GdipCreateFromHDC(.Hdc, hGraphics) = 0 Then
+            'Call GdipSetInterpolationMode(hGraphics, InterpolationModeNearestNeighbor)
+            'Call GdipSetPixelOffsetMode(hGraphics, PixelOffsetModeHalf)
+            GdipDrawImageRectRectI hGraphics, m_Bitmap, lL + 3, lT + 3, lW, lH, 0, 0, m_BmpW, m_BmpH, &H2, 0&, 0&, 0&
+        End If
+        GdipDeleteGraphics hGraphics
+    End With
+    
+    
+End Sub
+
+Private Function BitmapToArray(lBitmap As Long) As Byte()
+Dim oStream As IUnknown
+Dim eGuid   As GUID
+
+    Set oStream = pvStreamFromArray(0&, 0&)
+    If Not oStream Is Nothing Then
+        CLSIDFromString StrPtr("{557CF406-1A04-11D3-9A73-0000F81EF32E}"), eGuid
+        If GdipSaveImageToStream(lBitmap, oStream, eGuid, ByVal 0&) = 0& Then
+            Call pvStreamToArray(ObjPtr(oStream), BitmapToArray)
+        End If
+    End If
+End Function
+
+'?GDIP
+Private Sub ManageGDIP(ByVal StratUp As Boolean)
+    If StratUp Then
+        If m_token = 0& Then
+            Dim gdipSI(3) As Long
+            gdipSI(0) = 1&
+            Call GdiplusStartup(m_token, gdipSI(0), ByVal 0)
+        End If
+    Else
+        If m_token <> 0 Then Call GdiplusShutdown(m_token): m_token = 0
+    End If
+End Sub
+Private Sub CleanUp()
+    If m_Bitmap Then
+        Call GdipDisposeImage(m_Bitmap)
+        m_Bitmap = 0
+        m_BmpW = 0
+        m_BmpH = 0
+    End If
+End Sub
+Private Function LoadPictureFromFile(ByVal FileName As String) As Boolean
+    Call CleanUp
+    Call GdipLoadImageFromFile(StrPtr(FileName), m_Bitmap)
+    If m_Bitmap <> 0 Then
+        GdipGetImageDimension m_Bitmap, m_BmpW, m_BmpH
+        lblSize = "Tamaño" & m_BmpW & "*" & m_BmpH
+        LoadPictureFromFile = True
+    End If
+End Function
+Private Function LoadPictureFromStream(bvData() As Byte) As Boolean
+On Error GoTo Err
+Dim IStream   As IUnknown
+
+    CleanUp
+    Set IStream = pvStreamFromArray(VarPtr(bvData(0)), UBound(bvData) + 1&)
+    If Not IStream Is Nothing Then
+        If GdipLoadImageFromStream(IStream, m_Bitmap) = 0 Then
+            GdipGetImageDimension m_Bitmap, m_BmpW, m_BmpH
+            lblSize = "Tamaño" & vbNewLine & m_BmpW & "*" & m_BmpH
+            LoadPictureFromStream = True
+        End If
+    End If
+    Set IStream = Nothing
+Err:
+End Function
+
+
+Private Function pvStreamFromArray(ArrayPtr As Long, Length As Long) As stdole.IUnknown
+On Error GoTo e
+Dim o_hMem As Long
+Dim o_lpMem  As Long
+     
+    If ArrayPtr = 0& Then
+        CreateStreamOnHGlobal 0&, 1&, pvStreamFromArray
+    ElseIf Length <> 0& Then
+        o_hMem = GlobalAlloc(&H2&, Length)
+        If o_hMem <> 0 Then
+            o_lpMem = GlobalLock(o_hMem)
+            If o_lpMem <> 0 Then
+                CopyMemory ByVal o_lpMem, ByVal ArrayPtr, Length
+                Call GlobalUnlock(o_hMem)
+                Call CreateStreamOnHGlobal(o_hMem, 1&, pvStreamFromArray)
+            End If
+        End If
+    End If
+    
+e:
+End Function
+Private Function pvStreamToArray(hStream As Long, arrayBytes() As Byte) As Boolean
+Dim o_hMem        As Long
+Dim o_lpMem       As Long
+Dim o_lByteCount  As Long
+    
+    If hStream Then
+        If GetHGlobalFromStream(ByVal hStream, o_hMem) = 0 Then
+            o_lByteCount = GlobalSize(o_hMem)
+            If o_lByteCount > 0 Then
+                o_lpMem = GlobalLock(o_hMem)
+                If o_lpMem <> 0 Then
+                    ReDim arrayBytes(0 To o_lByteCount - 1)
+                    CopyMemory arrayBytes(0), ByVal o_lpMem, o_lByteCount
+                    GlobalUnlock o_hMem
+                    pvStreamToArray = True
+                End If
+            End If
+        End If
+        
+    End If
+End Function
+
+
+
+Private Function ScalePicture( _
+       ByVal lSrcWidth As Long, _
+       ByVal lSrcHeight As Long, _
+       ByVal lDstWidth As Long, _
+       ByVal lDstHeight As Long, _
+       ByRef lNewWidth As Long, _
+       ByRef lNewHeight As Long, _
+       ByRef lNewLeft As Long, _
+       ByRef lNewTop As Long)
+
+    Dim dHRatio As Double
+    Dim dVRatio As Double
+    Dim dRatio  As Double
+    
+    dHRatio = lSrcWidth / lDstWidth
+    dVRatio = lSrcHeight / lDstHeight
+     
+    If dHRatio > 1 Or dVRatio > 1 Then
+        If dHRatio > dVRatio Then
+            dRatio = dHRatio
+        Else
+            dRatio = dVRatio
+        End If
+    Else
+        lNewWidth = lSrcWidth
+        lNewHeight = lSrcHeight
+    End If
+            
+    If Not dRatio = 0 Then
+        lNewWidth = lSrcWidth / dRatio
+        lNewHeight = lSrcHeight / dRatio
+    End If
+    
+    lNewLeft = (lDstWidth - lNewWidth) / 2
+    lNewTop = (lDstHeight - lNewHeight) / 2
+End Function
+
+Private Function GetSize(tmp As String, lW As Long, lH As Long) As Boolean
+On Error Resume Next
+Dim lSep As String
+    
+    If InStr(tmp, "*") Then lSep = "*"
+    If InStr(LCase(tmp), "x") Then lSep = "x"
+    lW = Val(Split(tmp, lSep)(0))
+    lH = Val(Split(tmp, lSep)(1))
+End Function
+
+

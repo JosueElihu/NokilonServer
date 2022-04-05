@@ -7,3 +7,7 @@ Para la base de datos requiere de SQLite3 y J3cnn.dll (Envoltorio personalizado 
  
  
  ![ITypeComp::Bind](/server/res/nk-server0.jpg)
+ 
+El servidor se ejecuta en segundo plano, y muestra un icono en el área de notificaciones, para acceder a la interfaz del servidor, haga doble clic sobre el icono, o clic derecho para desplegar el menú de opciones.
+
+ ![ITypeComp::Bind](/server/res/nk-server2.jpg)

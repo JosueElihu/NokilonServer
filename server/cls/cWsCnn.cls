@@ -357,10 +357,13 @@ Dim i    As Long
         Case "LIST", "MLSD", "NLST"
             
             If LenB(Args) Then
-                Select Case Args
-                    Case "-a .", "-a": Args = vbNullString
+                Select Case LCase(Args)
+                    Case "-a .", "-a", "-l": Args = vbNullString
                     Case Else
+                    
                         If Left$(Args, 3) = "-a " Then Args = Right$(Args, Len(Args) - 3)
+                        If Left$(Args, 2) = "-l" Then Args = Right$(Args, Len(Args) - 2)
+                        
                         Args = Replace$(Args, "\", "")
                         Args = mvParseLocalPath(Args)
                         If Not PathExist(Args) Then
